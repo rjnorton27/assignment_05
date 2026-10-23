@@ -1,7 +1,5 @@
-Write your reflection here.
-
-See reflection.md for what makes a good reflection — be specific, use the
-terminology from this assignment (grain, long vs. wide, vectorized .str methods,
-coerce, NaT, pd.to_datetime format, .dt, concat, ignore_index, group by, named
-aggregation, reset_index, pivot_table, fill_value, melt, lineage), and make it
-actionable.
+The thing that clicked for me was grain. history has one row per person per week, and summarize_employees has one row per person. [I kept trying to loop over rows to count overtime weeks until I realized a group by just starts a new table at a new grain.] Once I asked “what is one row here?” before writing each function, the tests made a lot more sense.
+Cleaning the data showed me that values that look the same aren’t the same. " e004", "E4", and "e10 " all point to real employees, but none of them matched the roster until I chained .str.strip(), .str.upper(), and .str.zfill(3). [My first version stopped at .upper(), so anyone typed as "E4" silently disappeared from the summary.] Using errors="coerce" with fillna(0.0) meant a bad value like "N/A" became 0.0 instead of crashing the whole load. For dates, I parsed twice with explicit format= strings, one US and one ISO, because guessing can quietly swap day and month. Anything unreadable became NaT instead of a wrong date.
+The reshaping work was my favorite part. missed_weeks only works because pivot_table(fill_value=0) turns an absence, which isn’t a row in any export, into a visible zero, and melt then lets me filter for those zeros. I also learned to use ignore_index=True in concat, since every weekly file numbers its rows from 0.
+Keeping the raw columns next to the clean ones and carrying source_file along (lineage) paid off when [a total looked wrong]: I could open the exact week instead of guessing.
+Next time I’d run explore.py after every function instead of after each module. Seeing the new column appear would have caught my zfill mistake much sooner.
